@@ -1,5 +1,6 @@
 package com.showbabyapp.xanaduodownloader.downloader;
 
+import android.os.Handler;
 import android.os.SystemClock;
 
 /**
@@ -12,9 +13,11 @@ public class DownloadTask implements Runnable {
     private DownloadInfo downloadInfo;
     private boolean paused;
     private boolean canceled;
+    private Handler handler;
 
-    public DownloadTask(DownloadInfo downloadInfo) {
+    public DownloadTask(DownloadInfo downloadInfo, Handler handler) {
         this.downloadInfo = downloadInfo;
+        this.handler = handler;
     }
 
     public void resume() {
@@ -30,22 +33,23 @@ public class DownloadTask implements Runnable {
 
     private void start() {
         downloadInfo.status = DownloadInfo.DownloadStatus.downloading;
-        downloadInfo.totalLength = 1024 * 100;
-        DataChanger.getInstance().postStatus(downloadInfo);
+        downloadInfo.totalLength = 1024 * 10;
+        handler.obtainMessage(100, downloadInfo).sendToTarget();
+
         for (int i = downloadInfo.progress; i < downloadInfo.totalLength; ) {
             //防止用户快速不停的点击
             SystemClock.sleep(300);
             if (paused || canceled) {
-                downloadInfo.status = paused ? DownloadInfo.DownloadStatus.pause : DownloadInfo.DownloadStatus.cancel;
-                DataChanger.getInstance().postStatus(downloadInfo);
+                downloadInfo.status = paused ? DownloadInfo.DownloadStatus.paused : DownloadInfo.DownloadStatus.cancelled;
+                handler.obtainMessage(100, downloadInfo).sendToTarget();
                 return;
             }
             i += 1024;
             downloadInfo.progress += 1024;
-            DataChanger.getInstance().postStatus(downloadInfo);
+            handler.obtainMessage(100, downloadInfo).sendToTarget();
         }
         downloadInfo.status = DownloadInfo.DownloadStatus.completed;
-        DataChanger.getInstance().postStatus(downloadInfo);
+        handler.obtainMessage(100, downloadInfo).sendToTarget();
     }
 
     @Override

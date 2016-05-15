@@ -14,34 +14,48 @@ public class DownloadInfo implements Parcelable {
     public static final int VALUE_DOWNLOAD_ACTION_RESUME = 2;
     public static final int VALUE_DOWNLOAD_ACTION_CANCEL = 3;
 
-    public String id;
+    public int id;
     public String name;
     public String url;
-    public DownloadStatus status = DownloadStatus.waiting;
+    public DownloadStatus status = DownloadStatus.idle;
+    public int progress;
+    public int totalLength;
+
+    public DownloadInfo() {
+
+    }
+
+    public DownloadInfo(int id, String url) {
+        this.id = id;
+        this.url = url;
+    }
 
     /**
      * 下载状态
      */
     public enum DownloadStatus {
+        idle,
         waiting,
         downloading,
-        pause,
-        resume,
-        cancel,
+        paused,
+        resumed,
+        cancelled,
         completed
     }
 
     public String status(DownloadStatus status) {
         switch (status) {
+            case idle:
+                return "空闲";
             case waiting:
                 return "等待";
             case downloading:
                 return "下载";
-            case pause:
+            case paused:
                 return "暂停";
-            case resume:
+            case resumed:
                 return "继续";
-            case cancel:
+            case cancelled:
                 return "取消";
             default:
                 return "完成";
@@ -49,8 +63,25 @@ public class DownloadInfo implements Parcelable {
         }
     }
 
-    public int progress;
-    public int totalLength;
+    @Override
+    public String toString() {
+        return "DownloadInfo{" +
+                "id=" + id +
+                ", progress=" + progress +
+                ", totalLength=" + totalLength +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        //TODO 重写hashCode是因为我们需要通过id来比较，认为是同一个对象
+        return this.hashCode() == o.hashCode();
+    }
+
+    @Override
+    public int hashCode() {
+        return id;
+    }
 
     @Override
     public int describeContents() {
@@ -59,7 +90,7 @@ public class DownloadInfo implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(this.id);
+        dest.writeInt(this.id);
         dest.writeString(this.name);
         dest.writeString(this.url);
         dest.writeInt(this.status == null ? -1 : this.status.ordinal());
@@ -67,11 +98,8 @@ public class DownloadInfo implements Parcelable {
         dest.writeInt(this.totalLength);
     }
 
-    public DownloadInfo() {
-    }
-
     protected DownloadInfo(Parcel in) {
-        this.id = in.readString();
+        this.id = in.readInt();
         this.name = in.readString();
         this.url = in.readString();
         int tmpStatus = in.readInt();
@@ -91,16 +119,4 @@ public class DownloadInfo implements Parcelable {
             return new DownloadInfo[size];
         }
     };
-
-    @Override
-    public String toString() {
-        return "DownloadInfo{" +
-                "id='" + id + '\'' +
-                ", name='" + name + '\'' +
-                ", url='" + url + '\'' +
-                ", status=" + status +
-                ", progress=" + progress +
-                ", totalLength=" + totalLength +
-                '}';
-    }
 }

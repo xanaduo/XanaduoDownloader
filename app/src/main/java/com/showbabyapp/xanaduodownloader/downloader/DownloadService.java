@@ -2,7 +2,9 @@ package com.showbabyapp.xanaduodownloader.downloader;
 
 import android.app.Service;
 import android.content.Intent;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,9 +15,18 @@ import java.util.concurrent.Executors;
  * Created by 秀宝-段誉 on 2016/5/13 12:49.
  */
 public class DownloadService extends Service {
-    private Map<String, DownloadTask> taskMap = new HashMap<>();
+    private Map<Integer, DownloadTask> taskMap = new HashMap<>();
     private DownloadTask task;
     private ExecutorService cachedThreadPool;
+
+    private Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            if (msg.what == 100)
+                DataChanger.getInstance().postStatus((DownloadInfo) msg.obj);
+        }
+    };
 
     @Override
     public void onCreate() {
@@ -98,7 +109,7 @@ public class DownloadService extends Service {
      * @param downloadInfo
      */
     private void startDownload(DownloadInfo downloadInfo) {
-        DownloadTask task = new DownloadTask(downloadInfo);
+        DownloadTask task = new DownloadTask(downloadInfo, handler);
         taskMap.put(downloadInfo.id, task);
         cachedThreadPool.execute(task);
     }

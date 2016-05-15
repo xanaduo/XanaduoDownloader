@@ -60,18 +60,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         if (this.downloadInfo == null) {
             downloadInfo = new DownloadInfo();
-            downloadInfo.id = "1";
+            downloadInfo.id = 1;
             downloadInfo.name = "古生物";
             downloadInfo.url = "http://c.hiphotos.baidu.com/image/pic/item/0d338744ebf81a4c037521c4d52a6059252da67c.jpg";
         }
 
         switch (v.getId()) {
             case R.id.btn_download:
-                if (this.downloadInfo.status == DownloadInfo.DownloadStatus.waiting) {
+                if (this.downloadInfo.status == DownloadInfo.DownloadStatus.idle) {
                     downloadManager.start(downloadInfo);
                 } else if (this.downloadInfo.status == DownloadInfo.DownloadStatus.downloading) {
                     downloadManager.pause(downloadInfo);
-                } else if (this.downloadInfo.status == DownloadInfo.DownloadStatus.pause) {
+                } else if (this.downloadInfo.status == DownloadInfo.DownloadStatus.paused) {
                     downloadManager.resume(downloadInfo);
                 }
                 refreshView(downloadInfo.status(this.downloadInfo.status));
