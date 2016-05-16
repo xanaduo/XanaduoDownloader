@@ -151,7 +151,8 @@ public class TastActivity extends Activity {
                 case R.id.btn_download:
                     if (this.downloadInfo.status == DownloadInfo.DownloadStatus.idle) {
                         downloadManager.start(downloadInfo);
-                    } else if (this.downloadInfo.status == DownloadInfo.DownloadStatus.downloading) {
+                    } else if (this.downloadInfo.status == DownloadInfo.DownloadStatus.downloading
+                            || this.downloadInfo.status == DownloadInfo.DownloadStatus.waiting) {
                         downloadManager.pause(downloadInfo);
                     } else if (this.downloadInfo.status == DownloadInfo.DownloadStatus.paused) {
                         downloadManager.resume(downloadInfo);

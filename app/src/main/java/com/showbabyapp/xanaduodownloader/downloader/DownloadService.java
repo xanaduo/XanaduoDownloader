@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingDeque;
 
 /**
  * Created by 秀宝-段誉 on 2016/5/13 12:49.
@@ -18,14 +19,29 @@ public class DownloadService extends Service {
     private Map<Integer, DownloadTask> taskMap = new HashMap<>();
     private DownloadTask task;
     private ExecutorService cachedThreadPool;
+    /**
+     * 任务队列，控制下载的数量
+     */
+    private LinkedBlockingDeque<DownloadInfo> deque = new LinkedBlockingDeque<>();
 
     private Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            if (msg.what == 100)
-                DataChanger.getInstance().postStatus((DownloadInfo) msg.obj);
+            if (msg.what == 100) {
+                DownloadInfo downloadInfo = (DownloadInfo) msg.obj;
+                switch (downloadInfo.status) {
+                    case cancelled:
+                    case completed:
+                    case paused:
+                        removeTask(downloadInfo);
+                        checkNextTask(downloadInfo);
+                        break;
+                }
+                DataChanger.getInstance().postStatus(downloadInfo);
+            }
         }
+
     };
 
     @Override
@@ -58,7 +74,7 @@ public class DownloadService extends Service {
     private void doAction(int action, DownloadInfo downloadInfo) {
         switch (action) {
             case DownloadInfo.VALUE_DOWNLOAD_ACTION_START:
-                startDownload(downloadInfo);
+                addTask(downloadInfo);
                 break;
             case DownloadInfo.VALUE_DOWNLOAD_ACTION_PAUSE:
                 pauseDownload(downloadInfo);
@@ -79,8 +95,13 @@ public class DownloadService extends Service {
      */
     private void cancelDownload(DownloadInfo downloadInfo) {
         task = taskMap.remove(downloadInfo.id);
-        if (task != null)
+        if (task != null) {
             task.cancel();
+        } else {
+            downloadInfo.status = DownloadInfo.DownloadStatus.cancelled;
+            deque.remove(downloadInfo);
+            DataChanger.getInstance().postStatus(downloadInfo);
+        }
     }
 
     /**
@@ -89,7 +110,7 @@ public class DownloadService extends Service {
      * @param downloadInfo
      */
     private void resumeDownload(DownloadInfo downloadInfo) {
-        startDownload(downloadInfo);
+        addTask(downloadInfo);
     }
 
     /**
@@ -101,6 +122,11 @@ public class DownloadService extends Service {
         task = taskMap.remove(downloadInfo.id);
         if (task != null)
             task.pause();
+        else {
+            downloadInfo.status = DownloadInfo.DownloadStatus.paused;
+            deque.remove(downloadInfo);
+            DataChanger.getInstance().postStatus(downloadInfo);
+        }
     }
 
     /**
@@ -114,4 +140,49 @@ public class DownloadService extends Service {
         cachedThreadPool.execute(task);
     }
 
+    /**
+     * 添加任务，不过为了防止太多的任务我们需要对任务进行限制
+     *
+     * @param downloadInfo
+     */
+    private void addTask(DownloadInfo downloadInfo) {
+        //如果超过最大任务数就添加到等待队列中
+        if (taskMap.size() > downloadInfo.MAX_TASK) {
+            deque.offer(downloadInfo);
+            downloadInfo.status = DownloadInfo.DownloadStatus.waiting;
+            DataChanger.getInstance().postStatus(downloadInfo);
+        } else {
+            startDownload(downloadInfo);
+        }
+    }
+
+    /**
+     * 检查下一个任务
+     *
+     * @param downloadInfo
+     */
+    private void checkNextTask(DownloadInfo downloadInfo) {
+        DownloadInfo newInfo = deque.poll();
+        if (newInfo != null)
+            startDownload(newInfo);
+    }
+
+    private void removeTask(DownloadInfo downloadInfo) {
+        task = taskMap.remove(downloadInfo.id);
+        if (task != null) {
+            switch (downloadInfo.status) {
+                case paused:
+                    task.pause();
+                    break;
+                case cancelled:
+                    task.cancel();
+                    break;
+            }
+
+        }
+        else {
+            deque.remove(downloadInfo);
+            DataChanger.getInstance().postStatus(downloadInfo);
+        }
+    }
 }

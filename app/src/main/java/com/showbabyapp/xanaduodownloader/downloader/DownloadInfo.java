@@ -13,6 +13,7 @@ public class DownloadInfo implements Parcelable {
     public static final int VALUE_DOWNLOAD_ACTION_PAUSE = 1;
     public static final int VALUE_DOWNLOAD_ACTION_RESUME = 2;
     public static final int VALUE_DOWNLOAD_ACTION_CANCEL = 3;
+    public static final int MAX_TASK = 2;
 
     public int id;
     public String name;
