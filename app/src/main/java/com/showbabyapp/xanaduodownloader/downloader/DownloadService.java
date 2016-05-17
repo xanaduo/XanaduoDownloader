@@ -7,6 +7,7 @@ import android.os.IBinder;
 import android.os.Message;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -23,19 +24,20 @@ public class DownloadService extends Service {
      * 任务队列，控制下载的数量
      */
     private LinkedBlockingDeque<DownloadInfo> deque = new LinkedBlockingDeque<>();
+    public static final int HANDLER_WHAT = 100;
 
     private Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            if (msg.what == 100) {
+            if (msg.what == HANDLER_WHAT) {
                 DownloadInfo downloadInfo = (DownloadInfo) msg.obj;
                 switch (downloadInfo.status) {
                     case cancelled:
                     case completed:
                     case paused:
                         removeTask(downloadInfo);
-                        checkNextTask(downloadInfo);
+                        checkNextTask();
                         break;
                 }
                 DataChanger.getInstance().postStatus(downloadInfo);
@@ -85,6 +87,41 @@ public class DownloadService extends Service {
             case DownloadInfo.VALUE_DOWNLOAD_ACTION_CANCEL:
                 cancelDownload(downloadInfo);
                 break;
+            case DownloadInfo.VALUE_DOWNLOAD_ACTION_PAUSE_ALL:
+                pauseAllDownload();
+                break;
+            case DownloadInfo.VALUE_DOWNLOAD_ACTION_RECOVER_ALL:
+                recoverAllDownload();
+                break;
+        }
+    }
+
+    /**
+     * 暂停所有的下载
+     */
+    private void pauseAllDownload() {
+        //暂停正在下载中的任务
+        for (Map.Entry<Integer, DownloadTask> entry : taskMap.entrySet()) {
+            entry.getValue().pause();
+        }
+        taskMap.clear();
+        //暂停队列中的任务
+        while (deque.iterator().hasNext()) {
+            DownloadInfo downloadInfo = deque.poll();
+            downloadInfo.status = DownloadInfo.DownloadStatus.paused;
+            //TODO 效率有待改进
+            DataChanger.getInstance().postStatus(downloadInfo);
+        }
+    }
+
+    /**
+     * 恢复所有
+     */
+    private void recoverAllDownload() {
+        List<DownloadInfo> downloadInfos = DataChanger.getInstance().queryAllRecoverableInfos();
+        if (downloadInfos != null && downloadInfos.size() > 0) {
+            for (DownloadInfo info : downloadInfos)
+                addTask(info);
         }
     }
 
@@ -159,9 +196,8 @@ public class DownloadService extends Service {
     /**
      * 检查下一个任务
      *
-     * @param downloadInfo
      */
-    private void checkNextTask(DownloadInfo downloadInfo) {
+    private void checkNextTask() {
         DownloadInfo newInfo = deque.poll();
         if (newInfo != null)
             startDownload(newInfo);
@@ -179,8 +215,7 @@ public class DownloadService extends Service {
                     break;
             }
 
-        }
-        else {
+        } else {
             deque.remove(downloadInfo);
             DataChanger.getInstance().postStatus(downloadInfo);
         }

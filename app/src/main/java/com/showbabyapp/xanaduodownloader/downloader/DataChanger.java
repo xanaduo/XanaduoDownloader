@@ -1,5 +1,10 @@
 package com.showbabyapp.xanaduodownloader.downloader;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Observable;
 
 /**
@@ -9,6 +14,12 @@ import java.util.Observable;
  */
 public class DataChanger extends Observable {
     private static DataChanger dataChanger;
+    //使用LinkedHashMap是因为链表增删快
+    private HashMap<Integer, DownloadInfo> pauseMap;
+
+    public DataChanger() {
+        pauseMap = new LinkedHashMap<>();
+    }
 
     /**
      * 单例双重判断
@@ -31,7 +42,23 @@ public class DataChanger extends Observable {
      * @param downloadInfo
      */
     public void postStatus(DownloadInfo downloadInfo) {
+        //所有的操作数据都被保存起来，以便下次使用
+        pauseMap.put(downloadInfo.id, downloadInfo);
         setChanged();
         notifyObservers(downloadInfo);
+    }
+
+    /**
+     * 查询所有被暂停的任务
+     *
+     * @return
+     */
+    public List<DownloadInfo> queryAllRecoverableInfos() {
+        List<DownloadInfo> downloadInfos = new ArrayList<>();
+        for (Map.Entry<Integer, DownloadInfo> entry : pauseMap.entrySet()) {
+            if (entry.getValue().status == DownloadInfo.DownloadStatus.paused)
+                downloadInfos.add(entry.getValue());
+        }
+        return downloadInfos;
     }
 }

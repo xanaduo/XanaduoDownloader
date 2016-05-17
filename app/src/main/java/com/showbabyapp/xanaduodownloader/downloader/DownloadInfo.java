@@ -8,12 +8,14 @@ import android.os.Parcelable;
  */
 public class DownloadInfo implements Parcelable {
 
+    public static final int MAX_TASK = 2;
     public static final String KEY_DOWNLOAD_ACTION = "KEY_DOWNLOAD_ACTION";
     public static final int VALUE_DOWNLOAD_ACTION_START = 0;
     public static final int VALUE_DOWNLOAD_ACTION_PAUSE = 1;
     public static final int VALUE_DOWNLOAD_ACTION_RESUME = 2;
     public static final int VALUE_DOWNLOAD_ACTION_CANCEL = 3;
-    public static final int MAX_TASK = 2;
+    public static final int VALUE_DOWNLOAD_ACTION_PAUSE_ALL = 4;
+    public static final int VALUE_DOWNLOAD_ACTION_RECOVER_ALL = 5;
 
     public int id;
     public String name;

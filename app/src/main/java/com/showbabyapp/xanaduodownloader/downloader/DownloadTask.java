@@ -31,10 +31,13 @@ public class DownloadTask implements Runnable {
         this.canceled = true;
     }
 
+    /**
+     * 开始下载
+     */
     private void start() {
-        downloadInfo.status = DownloadInfo.DownloadStatus.downloading;
         downloadInfo.totalLength = 1024 * 10;
-        handler.obtainMessage(100, downloadInfo).sendToTarget();
+        downloadInfo.status = DownloadInfo.DownloadStatus.downloading;
+        notifyUpdate(100, downloadInfo);
 
         for (int i = downloadInfo.progress; i < downloadInfo.totalLength; ) {
             //防止用户快速不停的点击
@@ -49,11 +52,20 @@ public class DownloadTask implements Runnable {
             handler.obtainMessage(100, downloadInfo).sendToTarget();
         }
         downloadInfo.status = DownloadInfo.DownloadStatus.completed;
-        handler.obtainMessage(100, downloadInfo).sendToTarget();
+        notifyUpdate(DownloadService.HANDLER_WHAT, downloadInfo);
     }
 
     @Override
     public void run() {
         start();
+    }
+
+    /**
+     * 更新进度
+     * @param what
+     * @param downloadInfo
+     */
+    public void notifyUpdate(int what, DownloadInfo downloadInfo) {
+        handler.obtainMessage(what, downloadInfo).sendToTarget();
     }
 }
