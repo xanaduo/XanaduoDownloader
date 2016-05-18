@@ -35,7 +35,7 @@ public class DownloadTask implements Runnable {
      * 开始下载
      */
     private void start() {
-        downloadInfo.totalLength = 1024 * 10;
+        downloadInfo.totalLength = 1024 * 50;
         downloadInfo.status = DownloadInfo.DownloadStatus.downloading;
         notifyUpdate(100, downloadInfo);
 

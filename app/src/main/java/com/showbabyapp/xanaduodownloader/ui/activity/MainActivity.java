@@ -60,7 +60,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         if (this.downloadInfo == null) {
             downloadInfo = new DownloadInfo();
-            downloadInfo.id = 1;
+            downloadInfo.did = 1;
             downloadInfo.name = "古生物";
             downloadInfo.url = "http://c.hiphotos.baidu.com/image/pic/item/0d338744ebf81a4c037521c4d52a6059252da67c.jpg";
         }

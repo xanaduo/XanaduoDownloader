@@ -25,6 +25,7 @@ public class DownloadService extends Service {
      */
     private LinkedBlockingDeque<DownloadInfo> deque = new LinkedBlockingDeque<>();
     public static final int HANDLER_WHAT = 100;
+    private DataChanger changer;
 
     private Handler handler = new Handler() {
         @Override
@@ -40,7 +41,7 @@ public class DownloadService extends Service {
                         checkNextTask();
                         break;
                 }
-                DataChanger.getInstance().postStatus(downloadInfo);
+                changer.postStatus(downloadInfo);
             }
         }
 
@@ -50,6 +51,7 @@ public class DownloadService extends Service {
     public void onCreate() {
         super.onCreate();
         cachedThreadPool = Executors.newCachedThreadPool();
+        this.changer = DataChanger.getInstance(this);
     }
 
     @Override
@@ -110,7 +112,7 @@ public class DownloadService extends Service {
             DownloadInfo downloadInfo = deque.poll();
             downloadInfo.status = DownloadInfo.DownloadStatus.paused;
             //TODO 效率有待改进
-            DataChanger.getInstance().postStatus(downloadInfo);
+            changer.postStatus(downloadInfo);
         }
     }
 
@@ -118,7 +120,7 @@ public class DownloadService extends Service {
      * 恢复所有
      */
     private void recoverAllDownload() {
-        List<DownloadInfo> downloadInfos = DataChanger.getInstance().queryAllRecoverableInfos();
+        List<DownloadInfo> downloadInfos = changer.queryAllRecoverableInfos();
         if (downloadInfos != null && downloadInfos.size() > 0) {
             for (DownloadInfo info : downloadInfos)
                 addTask(info);
@@ -131,13 +133,13 @@ public class DownloadService extends Service {
      * @param downloadInfo
      */
     private void cancelDownload(DownloadInfo downloadInfo) {
-        task = taskMap.remove(downloadInfo.id);
+        task = taskMap.remove(downloadInfo.did);
         if (task != null) {
             task.cancel();
         } else {
             downloadInfo.status = DownloadInfo.DownloadStatus.cancelled;
             deque.remove(downloadInfo);
-            DataChanger.getInstance().postStatus(downloadInfo);
+            changer.postStatus(downloadInfo);
         }
     }
 
@@ -156,13 +158,13 @@ public class DownloadService extends Service {
      * @param downloadInfo
      */
     private void pauseDownload(DownloadInfo downloadInfo) {
-        task = taskMap.remove(downloadInfo.id);
+        task = taskMap.remove(downloadInfo.did);
         if (task != null)
             task.pause();
         else {
             downloadInfo.status = DownloadInfo.DownloadStatus.paused;
             deque.remove(downloadInfo);
-            DataChanger.getInstance().postStatus(downloadInfo);
+            DataChanger.getInstance(DownloadService.this).postStatus(downloadInfo);
         }
     }
 
@@ -173,7 +175,7 @@ public class DownloadService extends Service {
      */
     private void startDownload(DownloadInfo downloadInfo) {
         DownloadTask task = new DownloadTask(downloadInfo, handler);
-        taskMap.put(downloadInfo.id, task);
+        taskMap.put(downloadInfo.did, task);
         cachedThreadPool.execute(task);
     }
 
@@ -187,7 +189,7 @@ public class DownloadService extends Service {
         if (taskMap.size() > downloadInfo.MAX_TASK) {
             deque.offer(downloadInfo);
             downloadInfo.status = DownloadInfo.DownloadStatus.waiting;
-            DataChanger.getInstance().postStatus(downloadInfo);
+            changer.postStatus(downloadInfo);
         } else {
             startDownload(downloadInfo);
         }
@@ -195,7 +197,6 @@ public class DownloadService extends Service {
 
     /**
      * 检查下一个任务
-     *
      */
     private void checkNextTask() {
         DownloadInfo newInfo = deque.poll();
@@ -204,7 +205,7 @@ public class DownloadService extends Service {
     }
 
     private void removeTask(DownloadInfo downloadInfo) {
-        task = taskMap.remove(downloadInfo.id);
+        task = taskMap.remove(downloadInfo.did);
         if (task != null) {
             switch (downloadInfo.status) {
                 case paused:
@@ -217,7 +218,7 @@ public class DownloadService extends Service {
 
         } else {
             deque.remove(downloadInfo);
-            DataChanger.getInstance().postStatus(downloadInfo);
+            changer.postStatus(downloadInfo);
         }
     }
 }

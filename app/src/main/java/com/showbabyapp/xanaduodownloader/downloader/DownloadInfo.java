@@ -3,9 +3,13 @@ package com.showbabyapp.xanaduodownloader.downloader;
 import android.os.Parcel;
 import android.os.Parcelable;
 
+import org.xutils.db.annotation.Column;
+import org.xutils.db.annotation.Table;
+
 /**
  * Created by 秀宝-段誉 on 2016/5/13 13:10.
  */
+@Table(name = "DownloadInfo", onCreated = "CREATE UNIQUE INDEX index_name ON DownloadInfo(did,name)")
 public class DownloadInfo implements Parcelable {
 
     public static final int MAX_TASK = 2;
@@ -17,19 +21,27 @@ public class DownloadInfo implements Parcelable {
     public static final int VALUE_DOWNLOAD_ACTION_PAUSE_ALL = 4;
     public static final int VALUE_DOWNLOAD_ACTION_RECOVER_ALL = 5;
 
+    @Column(name = "id", isId = true)
     public int id;
+    @Column(name = "did")
+    public int did;
+    @Column(name = "name")
     public String name;
+    @Column(name = "url")
     public String url;
+    @Column(name = "status")
     public DownloadStatus status = DownloadStatus.idle;
+    @Column(name = "progress")
     public int progress;
+    @Column(name = "totalLength")
     public int totalLength;
 
     public DownloadInfo() {
 
     }
 
-    public DownloadInfo(int id, String url) {
-        this.id = id;
+    public DownloadInfo(int did, String url) {
+        this.did = did;
         this.url = url;
     }
 
@@ -69,7 +81,7 @@ public class DownloadInfo implements Parcelable {
     @Override
     public String toString() {
         return "DownloadInfo{" +
-                "id=" + id +
+                "did=" + did +
                 ", progress=" + progress +
                 ", totalLength=" + totalLength +
                 '}';
@@ -77,13 +89,13 @@ public class DownloadInfo implements Parcelable {
 
     @Override
     public boolean equals(Object o) {
-        //TODO 重写hashCode是因为我们需要通过id来比较，认为是同一个对象
+        //TODO 重写hashCode是因为我们需要通过did来比较，认为是同一个对象
         return this.hashCode() == o.hashCode();
     }
 
     @Override
     public int hashCode() {
-        return id;
+        return did;
     }
 
     @Override
@@ -93,7 +105,7 @@ public class DownloadInfo implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeInt(this.id);
+        dest.writeInt(this.did);
         dest.writeString(this.name);
         dest.writeString(this.url);
         dest.writeInt(this.status == null ? -1 : this.status.ordinal());
@@ -102,7 +114,7 @@ public class DownloadInfo implements Parcelable {
     }
 
     protected DownloadInfo(Parcel in) {
-        this.id = in.readInt();
+        this.did = in.readInt();
         this.name = in.readString();
         this.url = in.readString();
         int tmpStatus = in.readInt();

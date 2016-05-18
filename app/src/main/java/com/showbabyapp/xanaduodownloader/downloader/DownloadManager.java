@@ -35,6 +35,7 @@ public class DownloadManager {
 
     /**
      * 开始下载
+     *
      * @param downloadInfo
      */
     public void start(DownloadInfo downloadInfo) {
@@ -43,6 +44,7 @@ public class DownloadManager {
 
     /**
      * 暂停
+     *
      * @param downloadInfo
      */
     public void pause(DownloadInfo downloadInfo) {
@@ -51,6 +53,7 @@ public class DownloadManager {
 
     /**
      * 恢复
+     *
      * @param downloadInfo
      */
     public void resume(DownloadInfo downloadInfo) {
@@ -59,6 +62,7 @@ public class DownloadManager {
 
     /**
      * 取消
+     *
      * @param downloadInfo
      */
     public void cancel(DownloadInfo downloadInfo) {
@@ -85,7 +89,7 @@ public class DownloadManager {
      * @param watcher
      */
     public void addObserver(DataWatcher watcher) {
-        DataChanger.getInstance().addObserver(watcher);
+        DataChanger.getInstance(context).addObserver(watcher);
     }
 
     /**
@@ -94,6 +98,27 @@ public class DownloadManager {
      * @param watcher
      */
     public void deleteObserver(DataWatcher watcher) {
-        DataChanger.getInstance().deleteObserver(watcher);
+        DataChanger.getInstance(context).deleteObserver(watcher);
+    }
+
+    /**
+     * @param id
+     */
+    public DownloadInfo queryDownloadInfo(int id) {
+        return DataChanger.getInstance(context).queryDownloadInfoById(id);
+    }
+
+    /**
+     * 恢复所有
+     */
+    public void recoverAll() {
+        loadIntent(null, DownloadInfo.VALUE_DOWNLOAD_ACTION_RECOVER_ALL);
+    }
+
+    /**
+     * 暂停所有
+     */
+    public void pauseAll() {
+        loadIntent(null, DownloadInfo.VALUE_DOWNLOAD_ACTION_PAUSE_ALL);
     }
 }

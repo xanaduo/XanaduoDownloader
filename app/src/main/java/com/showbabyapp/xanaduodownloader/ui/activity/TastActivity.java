@@ -7,6 +7,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -22,8 +24,9 @@ import java.util.List;
 /**
  * Created by Administrator on 2016-05-15.
  */
-public class TastActivity extends Activity {
+public class TastActivity extends Activity implements CompoundButton.OnCheckedChangeListener {
 
+    private CheckBox cb_oprator;
     private ListView lv_content;
     private DownloadManager downloadManager;
     private List<DownloadInfo> downloadInfos = new ArrayList<>();
@@ -53,12 +56,16 @@ public class TastActivity extends Activity {
 
         setContentView(R.layout.activity_task);
         lv_content = (ListView) findViewById(R.id.lv_content);
+        cb_oprator = (CheckBox) findViewById(R.id.cb_oprator);
 
 
         init();
     }
 
     private void init() {
+        cb_oprator.setOnCheckedChangeListener(this);
+
+
         downloadInfos.add(new DownloadInfo(1, "http://e.hiphotos.baidu.com/image/pic/item/314e251f95cad1c8037ed8c97b3e6709c83d5112.jpg"));
         downloadInfos.add(new DownloadInfo(2, "http://s2.sinaimg.cn/mw690/b454a913tx6BsJh5dHr81&690"));
         downloadInfos.add(new DownloadInfo(3, "http://g.hiphotos.baidu.com/image/h%3D200/sign=dd31f62ab6119313d843f8b055390c10/35a85edf8db1cb13c72604fbd954564e93584b8e.jpg"));
@@ -69,6 +76,15 @@ public class TastActivity extends Activity {
 
         adapter = new TaskAdapter(this, downloadInfos);
         lv_content.setAdapter(adapter);
+
+        for (int i = 0; i < downloadInfos.size(); i++) {
+            DownloadInfo info = downloadInfos.get(i);
+            DownloadInfo downloadInfo = downloadManager.queryDownloadInfo(info.did);
+            if (downloadInfo != null) {
+                downloadInfos.remove(i);
+                downloadInfos.add(i, downloadInfo);
+            }
+        }
     }
 
     /**
@@ -87,6 +103,15 @@ public class TastActivity extends Activity {
     protected void onPause() {
         super.onPause();
         downloadManager.deleteObserver(watcher);
+    }
+
+    @Override
+    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        cb_oprator.setText(isChecked ? "暂停" : "恢复");
+        if (isChecked)
+            this.downloadManager.pauseAll();
+        else
+            this.downloadManager.recoverAll();
     }
 
     private class TaskAdapter extends BaseAdapter {
@@ -142,7 +167,7 @@ public class TastActivity extends Activity {
         public void initData(DownloadInfo downloadInfo) {
             this.downloadInfo = downloadInfo;
             txt_progress.setText(downloadInfo.status(downloadInfo.status)
-                    + "-" + downloadInfo.url);
+                    + "-" + downloadInfo.progress + "/" + downloadInfo.totalLength);
         }
 
         @Override
@@ -161,4 +186,5 @@ public class TastActivity extends Activity {
             }
         }
     }
+
 }
