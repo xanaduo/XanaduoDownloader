@@ -6,6 +6,9 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
 
+import org.xutils.ex.DbException;
+import org.xutils.x;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +55,22 @@ public class DownloadService extends Service {
         super.onCreate();
         cachedThreadPool = Executors.newCachedThreadPool();
         this.changer = DataChanger.getInstance(this);
+
+        try {
+            List<DownloadInfo> downloadInfos = x.getDb(DownloadDbManger.daoConfig).findAll(DownloadInfo.class);
+            if (downloadInfos != null && downloadInfos.size() > 0) {
+                for (DownloadInfo info : downloadInfos) {
+                    if (info.state == DownloadInfo.DownloadStatus.downloading.ordinal() || info.state == DownloadInfo.DownloadStatus.waiting.ordinal()) {
+                        info.status = DownloadInfo.DownloadStatus.paused;
+                        info.state = DownloadInfo.DownloadStatus.paused.ordinal();
+                        addTask(info);
+                    }
+                    changer.addToDownloadMap(info.did, info);
+                }
+            }
+        } catch (DbException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -64,10 +83,13 @@ public class DownloadService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null) {
             DownloadInfo downloadInfo = intent.getParcelableExtra(DownloadInfo.class.getSimpleName());
-            int action = intent.getIntExtra(DownloadInfo.KEY_DOWNLOAD_ACTION, -1);
-            doAction(action, downloadInfo);
+            if (downloadInfo != null) {
+                int action = intent.getIntExtra(DownloadInfo.KEY_DOWNLOAD_ACTION, -1);
+                doAction(action, downloadInfo);
+            }
         }
-        return super.onStartCommand(intent, flags, startId);
+        return super.
+                onStartCommand(intent, flags, startId);
     }
 
     /**
@@ -189,6 +211,7 @@ public class DownloadService extends Service {
         if (taskMap.size() > downloadInfo.MAX_TASK) {
             deque.offer(downloadInfo);
             downloadInfo.status = DownloadInfo.DownloadStatus.waiting;
+            downloadInfo.state = DownloadInfo.DownloadStatus.waiting.ordinal();
             changer.postStatus(downloadInfo);
         } else {
             startDownload(downloadInfo);

@@ -12,11 +12,11 @@ import android.widget.CompoundButton;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.showbabyapp.xanaduodownloader.App;
 import com.showbabyapp.xanaduodownloader.R;
 import com.showbabyapp.xanaduodownloader.common.log.Trace;
 import com.showbabyapp.xanaduodownloader.downloader.DataWatcher;
 import com.showbabyapp.xanaduodownloader.downloader.DownloadInfo;
-import com.showbabyapp.xanaduodownloader.downloader.DownloadManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +28,6 @@ public class TastActivity extends Activity implements CompoundButton.OnCheckedCh
 
     private CheckBox cb_oprator;
     private ListView lv_content;
-    private DownloadManager downloadManager;
     private List<DownloadInfo> downloadInfos = new ArrayList<>();
     private TaskAdapter adapter;
 
@@ -64,22 +63,18 @@ public class TastActivity extends Activity implements CompoundButton.OnCheckedCh
 
     private void init() {
         cb_oprator.setOnCheckedChangeListener(this);
-
-
         downloadInfos.add(new DownloadInfo(1, "http://e.hiphotos.baidu.com/image/pic/item/314e251f95cad1c8037ed8c97b3e6709c83d5112.jpg"));
         downloadInfos.add(new DownloadInfo(2, "http://s2.sinaimg.cn/mw690/b454a913tx6BsJh5dHr81&690"));
         downloadInfos.add(new DownloadInfo(3, "http://g.hiphotos.baidu.com/image/h%3D200/sign=dd31f62ab6119313d843f8b055390c10/35a85edf8db1cb13c72604fbd954564e93584b8e.jpg"));
         downloadInfos.add(new DownloadInfo(4, "http://h.hiphotos.baidu.com/image/pic/item/f703738da97739121c70e72dfa198618367ae22c.jpg"));
         downloadInfos.add(new DownloadInfo(5, "http://e.hiphotos.baidu.com/image/pic/item/9345d688d43f8794485f9f27d01b0ef41bd53a13.jpg"));
 
-        this.downloadManager = DownloadManager.getInstance(this);
-
         adapter = new TaskAdapter(this, downloadInfos);
         lv_content.setAdapter(adapter);
 
         for (int i = 0; i < downloadInfos.size(); i++) {
             DownloadInfo info = downloadInfos.get(i);
-            DownloadInfo downloadInfo = downloadManager.queryDownloadInfo(info.did);
+            DownloadInfo downloadInfo = App.downloadManager.queryDownloadInfo(info.did);
             if (downloadInfo != null) {
                 downloadInfos.remove(i);
                 downloadInfos.add(i, downloadInfo);
@@ -93,7 +88,7 @@ public class TastActivity extends Activity implements CompoundButton.OnCheckedCh
     @Override
     protected void onResume() {
         super.onResume();
-        downloadManager.addObserver(watcher);
+        App.downloadManager.addObserver(watcher);
     }
 
     /**
@@ -102,16 +97,16 @@ public class TastActivity extends Activity implements CompoundButton.OnCheckedCh
     @Override
     protected void onPause() {
         super.onPause();
-        downloadManager.deleteObserver(watcher);
+        App.downloadManager.deleteObserver(watcher);
     }
 
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
         cb_oprator.setText(isChecked ? "暂停" : "恢复");
         if (isChecked)
-            this.downloadManager.pauseAll();
+            App.downloadManager.pauseAll();
         else
-            this.downloadManager.recoverAll();
+            App.downloadManager.recoverAll();
     }
 
     private class TaskAdapter extends BaseAdapter {
@@ -166,7 +161,7 @@ public class TastActivity extends Activity implements CompoundButton.OnCheckedCh
 
         public void initData(DownloadInfo downloadInfo) {
             this.downloadInfo = downloadInfo;
-            txt_progress.setText(downloadInfo.status(downloadInfo.status)
+            txt_progress.setText(downloadInfo.status(downloadInfo.state)
                     + "-" + downloadInfo.progress + "/" + downloadInfo.totalLength);
         }
 
@@ -175,12 +170,12 @@ public class TastActivity extends Activity implements CompoundButton.OnCheckedCh
             switch (v.getId()) {
                 case R.id.btn_download:
                     if (this.downloadInfo.status == DownloadInfo.DownloadStatus.idle) {
-                        downloadManager.start(downloadInfo);
+                        App.downloadManager.start(downloadInfo);
                     } else if (this.downloadInfo.status == DownloadInfo.DownloadStatus.downloading
                             || this.downloadInfo.status == DownloadInfo.DownloadStatus.waiting) {
-                        downloadManager.pause(downloadInfo);
+                        App.downloadManager.pause(downloadInfo);
                     } else if (this.downloadInfo.status == DownloadInfo.DownloadStatus.paused) {
-                        downloadManager.resume(downloadInfo);
+                        App.downloadManager.resume(downloadInfo);
                     }
                     break;
             }

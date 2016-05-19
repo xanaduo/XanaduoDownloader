@@ -74,7 +74,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 } else if (this.downloadInfo.status == DownloadInfo.DownloadStatus.paused) {
                     downloadManager.resume(downloadInfo);
                 }
-                refreshView(downloadInfo.status(this.downloadInfo.status));
+                refreshView(downloadInfo.status(this.downloadInfo.state));
                 break;
         }
     }

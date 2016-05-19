@@ -15,6 +15,7 @@ public class DownloadManager {
 
     private DownloadManager(Context context) {
         this.context = context;
+        context.startService(new Intent(context, DownloadService.class));
     }
 
     /**

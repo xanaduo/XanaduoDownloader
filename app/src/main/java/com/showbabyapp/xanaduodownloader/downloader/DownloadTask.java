@@ -37,6 +37,7 @@ public class DownloadTask implements Runnable {
     private void start() {
         downloadInfo.totalLength = 1024 * 50;
         downloadInfo.status = DownloadInfo.DownloadStatus.downloading;
+        downloadInfo.state = DownloadInfo.DownloadStatus.downloading.ordinal();
         notifyUpdate(100, downloadInfo);
 
         for (int i = downloadInfo.progress; i < downloadInfo.totalLength; ) {
@@ -44,6 +45,7 @@ public class DownloadTask implements Runnable {
             SystemClock.sleep(300);
             if (paused || canceled) {
                 downloadInfo.status = paused ? DownloadInfo.DownloadStatus.paused : DownloadInfo.DownloadStatus.cancelled;
+                downloadInfo.state = paused ? DownloadInfo.DownloadStatus.paused.ordinal() : DownloadInfo.DownloadStatus.cancelled.ordinal();
                 handler.obtainMessage(100, downloadInfo).sendToTarget();
                 return;
             }
@@ -52,6 +54,7 @@ public class DownloadTask implements Runnable {
             handler.obtainMessage(100, downloadInfo).sendToTarget();
         }
         downloadInfo.status = DownloadInfo.DownloadStatus.completed;
+        downloadInfo.state = DownloadInfo.DownloadStatus.completed.ordinal();
         notifyUpdate(DownloadService.HANDLER_WHAT, downloadInfo);
     }
 
@@ -62,6 +65,7 @@ public class DownloadTask implements Runnable {
 
     /**
      * 更新进度
+     *
      * @param what
      * @param downloadInfo
      */

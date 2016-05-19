@@ -52,8 +52,8 @@ public class DataChanger extends Observable {
     public void postStatus(DownloadInfo downloadInfo) {
         //所有的操作数据都被保存起来，以便下次使用
         opraterMap.put(downloadInfo.did, downloadInfo);
-
         try {
+            //TODO 不能使用saveOrUpdate，因为没有id，会插入新的数据
             x.getDb(DownloadDbManger.daoConfig).saveOrUpdate(downloadInfo);
         } catch (DbException e) {
             e.printStackTrace();
@@ -85,5 +85,9 @@ public class DataChanger extends Observable {
      */
     public DownloadInfo queryDownloadInfoById(int id) {
         return opraterMap.get(id);
+    }
+
+    public void addToDownloadMap(Integer key, DownloadInfo value) {
+        opraterMap.put(key, value);
     }
 }

@@ -29,6 +29,8 @@ public class DownloadInfo implements Parcelable {
     public String name;
     @Column(name = "url")
     public String url;
+    @Column(name = "state")
+    public int state;
     @Column(name = "status")
     public DownloadStatus status = DownloadStatus.idle;
     @Column(name = "progress")
@@ -58,19 +60,19 @@ public class DownloadInfo implements Parcelable {
         completed
     }
 
-    public String status(DownloadStatus status) {
-        switch (status) {
-            case idle:
+    public String status(int state) {
+        switch (state) {
+            case 0:
                 return "空闲";
-            case waiting:
+            case 1:
                 return "等待";
-            case downloading:
+            case 2:
                 return "下载";
-            case paused:
+            case 3:
                 return "暂停";
-            case resumed:
+            case 4:
                 return "继续";
-            case cancelled:
+            case 5:
                 return "取消";
             default:
                 return "完成";
