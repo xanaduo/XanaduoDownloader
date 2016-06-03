@@ -15,7 +15,7 @@ import java.util.Observable;
 /**
  * Created by 秀宝-段誉 on 2016/5/13 12:49.
  * <p/>
- * 监测数据变化的
+ * 被观察者
  */
 public class DataChanger extends Observable {
     private static DataChanger dataChanger;

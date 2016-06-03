@@ -5,6 +5,8 @@ import java.util.Observer;
 
 /**
  * Created by 秀宝-段誉 on 2016/5/13 12:49.
+ *
+ * 观察者
  */
 public abstract class DataWatcher implements Observer {
 
